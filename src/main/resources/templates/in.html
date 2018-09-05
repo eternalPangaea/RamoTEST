@@ -1,0 +1,1280 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>iwms</title>
+    <style>
+        .nav-item a{ font-family:"微软雅黑"}
+        .space{
+            display: inline-block;
+            padding: .5em 1em;
+        }
+        .navbar-nav{
+            display: inline-block;
+            padding: 0.5em 10em;
+
+        }
+        .form-inline{
+
+
+            padding: .5em 4em;
+        }
+
+        .cebianlan{font-family:"微软雅黑";color: aliceblue;text-align: center;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link href='/css/fullcalendar.css' rel='stylesheet' />
+<link href='/css/fullcalendar.print.css' rel='stylesheet' media='print' />
+<link rel="stylesheet" href="http://static.runoob.com/assets/js/jquery-treeview/jquery.treeview.css" />
+
+
+
+<script src="/js/jquery-3.3.1.min.js"></script>
+<script src="/js/popper.min.js"></script>
+<script src='/js/moment.min.js'></script>
+<script src='/js/fullcalendar.min.js'></script>
+<script src="/js/bootstrap.min.js"></script>
+
+<script src="http://static.runoob.com/assets/js/jquery-treeview/jquery.treeview.js" type="text/javascript"></script>
+
+
+
+<script>
+
+    $(document).ready(function(){
+        // 首先获取当前参数
+        var Request = new Object();
+        Request = GetRequest();
+        var user_name=Request['user_name'];
+        var url=Request['url'];
+        var logintl_id=Request['logintl_id'];
+        var nickname=Request['nickname'];
+        var image_file=Request['image_file'];
+        $("#nkn").text(nickname+"");
+        $("#touxiang").attr('src',image_file);
+        var data1=JSON.stringify({"logintl_id":logintl_id});
+        if(user_name==null){ window.location.href="http://http://114.115.172.113/login";}
+        var taskstatus=[];//任务状态信息
+
+        $("#bt_jh").click(function () {
+            window.location.href="http://http://114.115.172.113/h"+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;;
+        });
+        $("#bt_kb").click(function () {
+            window.location.href="http://http://114.115.172.113/broad"+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;;
+        });
+        $("#bt_set").click(function () {
+            window.location.href="http://http://114.115.172.113/setting"+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;;
+        });
+
+
+        // 原生数据源
+        var raw_typel=[];//原生任务类型列表
+        var raw_taskdata=[];//原生任务列表
+
+
+
+        //熟肉
+        var mature_taskdata=[];//任务列表
+
+        // 任务状态
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/task/typelist",
+            async: false,
+            contentType:"application/json",
+            success:function(result){
+                taskstatus=result;
+            }
+        });
+
+
+        // 任务类型
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/task/typelist",
+            async: false,
+            contentType:"application/json",
+            success:function(result){
+               raw_typel=result;
+                for (var i = 0; i < result.length; i++) {
+                    var biaoqian1=$("<a class=\"dropdown-item \" href=\"#\">"+result[i].t_name+"</a>");
+                    var biaoqian2=$("<a class=\"dropdown-item btn newtask btn-primary\"  data-toggle=\"modal\" data-target=\"#myModal2\" id=\""+result[i].t_typeid+"\" >"+result[i].t_name+"</a>");
+
+                    $("#renwulie1").append(biaoqian1);
+                    $("#renwulie_1").append(biaoqian2);
+
+                }
+
+                // 任务类型填写
+                $(".newtask").click(function () {
+                    $("#t_typeid").val($(this).attr("id"));
+                    $("#t_creator").val(logintl_id);
+                });
+
+
+
+
+
+            }
+
+        });
+
+        $("#sub").click(function () {
+            var jsonuserinfo = $("#formDemo").serializeObject();
+            // jsonuserinfo.t_req_ftime= new Date(jsonuserinfo.t_req_ftime);
+            // jsonuserinfo.t_req_stime= new Date(jsonuserinfo.t_req_stime);
+            jsonuserinfo.is_divide=$("#is_divide").prop("checked");
+            var formjson=JSON.stringify(jsonuserinfo);
+            $.ajax({
+                type:"POST",
+                dataType: "JSON",
+                url:"http://http://114.115.172.113/task/newtask",
+                data:formjson,
+                contentType:"application/json",
+                success:function(result,status){alert(result.message) ;
+                    location.reload();},
+                error:function () {
+
+                }
+
+
+            });
+        });
+
+        //form转json
+        $.fn.serializeObject = function()
+        {
+            var o = {};
+            var a = this.serializeArray();
+            $.each(a, function() {
+                if (o[this.name]) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]];
+                    }
+                    o[this.name].push(this.value || '');
+                } else {
+                    o[this.name] = this.value || '';
+                }
+            });
+            return o;
+        };
+
+        // 这里是物品组织表获取
+            $.ajax({
+                type:"POST",
+                dataType: "JSON",
+                url:"http://http://114.115.172.113/task/matlstruct",
+                data:data1,
+                contentType:"application/json",
+                success:function(result,status){
+                    var wupinlist=result;
+                    var mulunum=0;
+                    for(i=0;i<wupinlist.length;i++)
+                    {
+                        if(wupinlist[i].is_mulu==true){mulunum=mulunum+1;}
+                        if(wupinlist[i].matl_structparent==""&&wupinlist[i].is_mulu==true)
+                        {
+
+                            $("#browser").append("<li><span class=\"folder\" >"+wupinlist[i].matl_structname+"</span><ul id=\""+wupinlist[i].matl_structname+"\" ></ul></li>");
+                            mulunum=mulunum-1;
+                        }
+                    }
+		for(;mulunum!=0;){
+                    for(i=0;i<wupinlist.length;i++)
+                    {
+                        if(wupinlist[i].matl_structparent!=""&&wupinlist[i].is_mulu==true)
+                        {
+
+                            $("#"+wupinlist[i].matl_structparent).append("<li><span class=\"folder\" >"+wupinlist[i].matl_structname+"</span><ul id=\""+wupinlist[i].matl_structname+"\" ></ul></li>");
+                            mulunum=mulunum-1;
+                        }
+                    }
+                    }
+                    for(i=0;i<wupinlist.length;i++)
+                    {
+                        if(wupinlist[i].matl_structparent!=""&&wupinlist[i].is_mulu==false)
+                        {
+                            $("#"+wupinlist[i].matl_structparent).append("<li><span class=\"file matl\" id=\""+wupinlist[i].matl_structid+"\" >"+wupinlist[i].matl_structname+"</span></li>");
+                        }
+                    }
+                    $("span.matl").click(function(){
+
+                        $("#whs_record").empty();
+
+                        var  matl_structid=$(this).attr("id")+"";
+                        var matl_name=$(this).text();
+                        var wuliaoid=JSON.stringify({"matl_id":matl_structid});
+                        $.ajax({
+                            type:"POST",
+                            dataType: "JSON",
+                            url:"http://http://114.115.172.113/task/findwhsbymatl",
+                            data:wuliaoid,
+                            contentType:"application/json",
+                            success:function(result,status){
+
+                                for(i=0;i<result.length;i++){
+
+                                    var tim=formatDateTime(result[i].wh_intime);
+                                    // $("#whs_record").append("<tr><td>"+result[i].whs_id+"</td><td>"+result[i].matl_id+"</td><td>"+matl_name+"</td><td>"+result[i].difference1+"</td><td>"+ result[i].difference2+"</td><td>"+result[i].quantity+"</td><td>"+result[i].danwei+"</td><td>"+ result[i].wh_intime+"</td><td>"+ result[i].wh_intime+"</td><td>"+ result[i].is_matllock+"</td><td>"+ result[i].lock_id+"</td><td>"+ result[i].pr_id+"</td><td>"+result[i].matl_statusid+"</td><td>"+ result[i].picihao+"</td></tr>")
+                                    $("#whs_record").append("<tr> <td><input type=\"checkbox\" class=\"form-check-input checkmalts\"  value=\"whs_id:"+result[i].whs_id+"%matl_id:"+result[i].matl_id+"\" ></td><td><input type=\"text\" class=\"form-control col-md-3 \" id=\""+result[i].recordtl_id+"\"></td><td>"+result[i].whs_id+"</td><td>"+result[i].matl_id+"</td><td>"+matl_name+"</td><td>"+result[i].quantity+"</td><td>"+result[i].danwei+"</td><td>"+tim+"</td></tr>");
+                                }
+                                $("#matl_tj").click(function(){
+                                    var rs="";
+                                    var view="";
+                                    $(".checkmalts").each(function(){
+                                        if($(this).prop('checked')!=false){
+
+                                          rs=rs+$(this).val()+"|";
+                                          var text=($(this).val().split(":")[0]).split("%")[0];
+                                          rs=rs+"num:"+$("#"+text).val()+"@";
+
+                                            var viewlist=[];
+                                            viewlist=$(this).val().split("%");
+                                            view=view+"仓位:"+viewlist[0].split(":")[1]+" 物品id:"+viewlist[1].split(":")[1]+" 数量："+$("#"+text).val();
+
+                                        }
+                                    });
+                                    $("#t_content").val(rs);
+
+
+                                    $("#t_cont").val(view);
+                                });
+                            },
+                            error:function () {
+
+                            }
+                        });
+                    });
+                    $("#browser").treeview({
+                        toggle: function() {
+                            console.log("%s was toggled.", $(this).find(">span").text());
+                        }
+                    });
+                },
+                error:function () {
+                }
+            });
+
+       var whsstatus=null;
+        // 仓位组织获取
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/task/findwhstructure",
+            contentType:"application/json",
+            success:function(whsresult,status){
+                var whslist=whsresult;
+                // 嵌入库标签
+                for(i=0;i<whslist.length;i++)
+                {
+                    if(whslist[i].wh_parent=="K"||whslist[i].wh_parent=="G")
+                    {
+                        $("#out_brower").append("<li><span  class=\"folder\" >"+whslist[i].wh_name+"</span><ul id=\""+whslist[i].wh_id+"\"></ul></li>");
+                    }
+                }
+
+                // 嵌入库区标签
+                for(i=0;i<whslist.length;i++){
+                    if(whslist[i].wh_parent!=""&&whslist[i].is_mulu==true)
+                    {
+                        $("#"+whslist[i].wh_parent).append("<li><span  class=\"file wh\" id=\""+whslist[i].wh_id+"\">"+whslist[i].wh_name+"</span></li>");
+
+                    }
+                }
+
+                $("#out_brower").treeview({
+                    toggle: function() {
+                        console.log("%s was toggled.", $(this).find(">span").text());
+                    }
+                });
+
+                // 绑定库区点击事件-查看库区下面的仓位
+                $("span.wh").click(function(){
+                    $("#in_out").empty();
+
+                    //先上仓位
+
+                    var kuid= $(this).attr("id");
+                    var jieshubiaozhi=false;
+                    for(i=0;i<whslist.length;i++){
+                       if( whslist[i].wh_parent==kuid)
+                       {
+                           for(k=0;k<whsstatus.length;k++)
+                           {
+                                if(whsstatus[k].whs_id==whslist[i].wh_id)
+                                {
+                                    $("#in_out").append("<tr><td><input type=\"checkbox\" class=\"form-check-input checkwhs\"  value=\"whs_id:"+whsstatus[k].whs_id+"\" ></td><td>"+whsstatus[k].whs_id+"</td><td>"+whsstatus[k].whs_wanringid+"</td><td>"+whsstatus[k].vol_percent+"</td><td>"+whsstatus[k].whs_availvol+"</td><td>"+whsstatus[k].whs_allvol+"</td></tr>");
+                                    jieshubiaozhi=true;
+                                    break;
+                                }
+                           }
+                           if(jieshubiaozhi)break;
+                       }
+                    }
+                    $("#weizhi_tj").click(function () {
+                        $(".checkwhs").each(function () {
+                            if($(this).prop("checked")!=false){
+                                var rs_whs=$(this).val()+"@";
+                                $("#t_content").val(rs_whs);
+                                $("#t_cont").val("仓位："+($(this).val()).split(":")[1]);
+                            };
+                        });
+
+                    });
+                });
+            },
+            error:function () {
+            }
+        });
+
+
+        // 仓位获取
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/task/whsstatus",
+            contentType:"application/json",
+            success:function(result,status){
+                whsstatus = result;
+            }});
+
+
+        // 部门组织获取
+        $.ajax({
+            type:"POST",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/task/findsubdept",
+            data:data1,
+            contentType:"application/json",
+            success:function(result,status){
+                var task_object=result;
+                //嵌入部门标签
+                for(i=0;i<task_object.length;i++){
+
+                        $("#object_brower").append("<li><span  class=\"file ob\" id=\""+task_object[i].dept_id+"\">"+task_object[i].dept_name+"</span></li>");
+
+
+                }
+                $("#object_brower").treeview({
+                    toggle: function() {
+                        console.log("%s was toggled.", $(this).find(">span").text());
+                    }
+                });
+
+                // 绑定部门点击事件-查看部门下面的人员
+                $("span.ob").click(function(){
+                    $("#object_body").empty();
+                    var deptid= $(this).attr("id");
+
+                    //人员ajax
+                    var dept=JSON.stringify({"dept_id":deptid});
+                        $.ajax({
+                            type:"POST",
+                            dataType: "JSON",
+                            url:"http://http://114.115.172.113/task/findemployees",
+                            data:dept,
+                            contentType:"application/json",
+                            success:function(result,status) {
+                                var task_dept=result;
+                                for(i=0;i<task_dept.length;i++) {
+                                    $("#object_body").append("<tr><td><input type=\"checkbox\" class=\"form-check-input taskob\"  value=\""+task_dept[i].logintl_id+"\" ></td><td>" +task_dept[i].nickname+"</td></tr>");
+
+                                }
+                            }});
+
+                    $("#object_tj").click(function () {
+                        var rs_taskob="";
+                        $(".taskob").each(function () {
+                            if($(this).prop("checked")!=false){
+                                rs_taskob=rs_taskob+$(this).val()+",";
+                            };
+                        });
+                        rs_taskob=rs_taskob.substr(0, rs_taskob.length - 1);
+                        $("#t_object").val(rs_taskob);
+                    });
+
+
+                });
+            },
+            error:function () {
+            }
+        });
+
+
+
+        // 默认选择当前日期显示任务看板
+        // 日期加减函数（停用）
+        // function addDate(date,days){
+        //     var d=new Date(date);
+        //     d.setDate(d.getDate()+days);
+        //     var month=d.getMonth()+1;
+        //     var day = d.getDate();
+        //     if(month<10){
+        //         month = "0"+month;
+        //     }
+        //     if(day<10){
+        //         day = "0"+day;
+        //     }
+        //     var val = d.getFullYear()+"/"+month+"/"+day;
+        //     return val;
+        // }
+        // var myDate = new Date();
+        // var beforeday=addDate(myDate,-7);
+        // var viewdate=beforeday+"-"+myDate.toLocaleDateString();
+        // $("#data").text(viewdate);
+        // // 日期初始化
+        // $("#data").click(function () {
+        //     var myDate = new Date();
+        //     var beforeday=addDate(myDate,-7);
+        //     var viewdate=beforeday+"-"+myDate.toLocaleDateString();
+        //     $("#data").text(viewdate);
+        // });
+        // // 日期前进按钮
+        // $("#qian").click(function(){
+        //     // 字符串转日期
+        //     var dangqian= $("#data").text();
+        //     var days= new Date(Date.parse( dangqian.split("-")[0].replace(/-/g,"/")));
+        //     var beforeday=addDate(days,-7);
+        //     var viewdate=beforeday+"-"+days.toLocaleDateString();
+        //     $("#data").text(viewdate);
+        // });
+        //     // 日期后退按钮
+        // $("#hou").click(function () {
+        //     // 字符串转日期
+        //     var dangqian= $("#data").text();
+        //     var days= new Date(Date.parse( dangqian.split("-")[1].replace(/-/g,"/")));
+        //     var beforeday=addDate(days,7);
+        //     var viewdate=days.toLocaleDateString()+"-"+beforeday;
+        //     $("#data").text(viewdate);
+        // });
+        //
+
+        $("#t_content").hide();
+        $("#myModal2").hide();
+        $(".hied").hide();
+        $("#t_object").hide();
+        $(".hidecq").hide();
+
+
+        // 任务列表详细信息
+        $.ajax({
+            type:"POST",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/task/list",
+            data:data1,
+            async: false,
+            contentType:"application/json",
+            success:function(result){
+                var events=[];
+                raw_taskdata=result;
+                var event={};
+                for(i=0;i<raw_taskdata.length;i++){
+                    event={};
+                    event.id=raw_taskdata[i].t_id;
+                    event.title=raw_taskdata[i].t_id;
+                    event.start=new Date(raw_taskdata[i].t_req_stime);
+                    event.end=new Date(raw_taskdata[i].t_req_ftime);
+                    for(j=0;j<raw_typel.length;j++){
+                        if(raw_taskdata[i].t_typeid==raw_typel[j].t_typeid){
+                            event.color=raw_typel[j].t_color;
+                            break;
+                        }
+                    }
+                    events.push(event);
+
+                }
+                mature_taskdata=events;
+            }
+        });
+
+        // 任务看板
+        $('#calendar').fullCalendar({
+
+            defaultView:"agendaWeek",   //进入组件默认渲染的视图，默认为month
+            customButtons: {            //自定义header属性中按钮[customButtons与header并用]
+                myCustomButton: {
+                    text: 'custom!',
+                    click: function() {
+                        alert('clicked the custom button!');
+                    }
+                }
+            },
+            header: {
+                left: 'prev,next today',            //上一页、下一页、今天
+                center: 'title myCustomButton',     //居中：时间范围区间标题
+                right: 'month,agendaWeek,agendaDay,listWeek'    //右边：显示哪些视图
+            },
+            height : 790,          //组件高度，默认aspectRatio即纵横比；parent父容器大小；auto自动不带滚动条；支持数字和函数返回像素；支持$('#calendar').fullCalendar('option', 'height', 700);
+
+            firstDay : 1,           //视图从每周几开始，默认0为周日，1为周1，2为周2，依此类推
+            isRTL : false,          //从右到左显示模式，默认false
+            fixedWeekCount : false, //月视图下，显示6周（不够的显示下个月的）true；默认true
+            weekNumbers : true,     //是否在视图左边显示这是第多少周，默认false
+            eventLimit: true,       //数据条数太多时，限制各自里显示的数据条数（多余的以“+2more”格式显示），默认false不限制,支持输入数字设定固定的显示条数
+            allDayText : "全天",            //自定义全天视图的名称
+            slotDuration : "01:00:00",      //一格时间槽代表多长时间，默认00:30:00（30分钟）
+            slotLabelFormat : "H(:mm)a",    //日期视图左边那一列显示的每一格日期时间格式
+            slotLabelInterval : "02:00:00", //日期视图左边那一列多长间隔显示一条日期文字(默认跟着slotDuration走的，可自定义)
+            snapDuration : "05:00:00",      //其实就是动态创建一个日程时，默认创建多长的时间块
+
+            slotEventOverlap : false,       //相同时间段的多个日程视觉上是否允许重叠，默认true允许
+//          listDayFormat : false,          //listview视图下，每天的分割区，[左边]的标题自定义，false表示无标题
+//          listDayAltFormat : false,       //listview视图下，每天的分割区，[右边]的标题自定义，false表示无标题
+            noEventsMessage : "哎呀没数据",   //listview视图下，无数据时显示提示
+            // defaultDate  : '2016-10-13',    //默认显示那一天的日期视图
+            nowIndicator : true,            //周/日视图中显示今天当前时间点（以红线标记），默认false不显示
+//          locale :  "zh-cn",              //国际化，前提引用lang-all.js，参见官方demo-->languages.html
+//          timeFormat :  "h:mm",           //全局的日期显示格式(自定义成如12:00或12am等)
+//          columnFormat : "",              //顶部日期显示格式'ddd' like 'Mon','ddd M/D' like 'Mon 9/7','dddd' like 'Monday'
+//          titleFormat : "",               //顶部title区域格式化
+            buttonText : {today:'今天',month:'月',week:'周',day:'日',listWeek:'列表'},  //对应顶部操作按钮的名称自定义
+            monthNames : ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"], //月份自定义命名
+            monthNamesShort: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"], //月份缩略命名（英语比较实用：全称January可设置缩略为Jan）
+            dayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],       //同理monthNames
+            dayNamesShort: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],  //同理monthNamesShort
+            weekNumberTitle : "周",         //周的国际化,默认为"W"
+//          displayEventTime : false,       //每一个日程块中是否显示时间，默认true显示
+//          displayEventEnd : true,         //是否显示日程块中的“结束时间”，默认true，如果false则只显示开始时间
+            eventLimitText  : "更多",       //当一块区域内容太多以"+2 more"格式显示时，这个more的名称自定义（应该与eventLimit: true一并用）
+            dayPopoverFormat : "YYYY年M月d日", //点开"+2 more"弹出的小窗口标题，与eventLimitClick可以结合用
+            navLinks : true,                // “xx周”是否可以被点击，默认false，如果为true则周视图“周几”被点击之后进入日视图。本地测试：没什么效果
+
+            eventClick: function(calEvent, jsEvent, view) {//日程区块，单击时触发
+                var litsnum;
+                $("#taskview_id").text(calEvent.id);
+
+                for(i=0;i<raw_taskdata.length;i++){
+                    if(raw_taskdata[i].t_id==calEvent.id){listnum=i;break;}
+                }
+                for(j=0;j<raw_typel.length;j++){
+                    if(raw_taskdata[listnum].t_typeid==raw_typel[j].t_typeid){
+                     var tname  =raw_typel[j].t_name;
+                        break;
+                    }
+                }
+
+                $("#taskview_type").text(tname);
+                console.log(raw_taskdata[listnum]);
+                $("#taskview_content").text(raw_taskdata[listnum].t_content);
+                $("#taskview_priority").text(raw_taskdata[listnum].t_priority);
+
+                var finduser1=JSON.stringify({"logintl_id":raw_taskdata[listnum].t_object});
+                $.ajax({
+                    type:"POST",
+                    dataType: "JSON",
+                    url:"http://http://114.115.172.113/task/list",
+                    data:finduser1,
+                    contentType:"application/json",
+                    success:function(result){
+                        $("#taskview_object").text(result.user_name);
+                    }
+                });
+
+
+                var finduser2=JSON.stringify({"logintl_id":raw_taskdata[listnum].t_creator});
+                $.ajax({
+                    type:"POST",
+                    dataType: "JSON",
+                    url:"http://http://114.115.172.113/task/list",
+                    data:finduser2,
+                    contentType:"application/json",
+                    success:function(result){
+                        $("#taskview_creator").text(result.user_name);
+                    }
+                });
+
+
+
+                $("#taskview_ctime").text(raw_taskdata[listnum].t_ctime);
+                $("#taskview_req_stime").text(raw_taskdata[listnum].t_req_stime);
+                $("#taskview_req_ftime").text(raw_taskdata[listnum].t_req_ftime);
+                $("#taskview_rtime").text(raw_taskdata[listnum].t_rtime);
+                $("#taskview_stime").text(raw_taskdata[listnum].t_stime);
+                $("#taskview_ftime").text(raw_taskdata[listnum].t_ftime);
+
+                for(i=0;i<taskstatus.length;i++){
+                  if( taskstatus[i].t_statusid==raw_taskdata[listnum]){
+                      $("#taskview_statusid").text(taskstatus[i].t_statusinfo);
+                      break;
+                  }
+                }
+
+                $("#taskview_info").text(raw_taskdata[listnum].t_info);
+                $('#taskview_bt_hide').click();
+
+                $("#t_typeid").val(raw_typel[j].t_typeid);
+                $("#t_content").val(raw_taskdata[listnum].t_content);
+                $("#t_req_stime").val(raw_taskdata[listnum].t_req_stime);
+                $("#t_req_ftime").val(raw_taskdata[listnum].t_req_ftime);
+                $("#t_info").val(raw_taskdata[listnum].t_info);
+                $("#t_priority").val(raw_taskdata[listnum].t_priority);
+
+                // $(this).css('background-color', 'green');
+                return false;  //return false可以阻止点击后续事件发生（比如event中的url跳转事件）
+            },
+            // eventMouseover: function(calEvent, jsEvent, view){//鼠标在日程区块上时触发
+            //     $(this).css('background-color', 'gray');
+            // },
+            // eventMouseout: function(calEvent, jsEvent, view){//鼠标从日程区块离开时触发
+            //     $(this).css('background-color', 'yellow');
+            // },
+            // selectable: true,           //允许用户可以长按鼠标选择多个区域(比如月视图，可以选中多天；日视图可以选中多个小时)，默认false不能选择多区域的
+            selectHelper: true,         //接selectable，周/日视图在选择时是否预先画出“日程区块”的样式出来
+            unselectAuto : true,        //是否点击页面上的其他地方会导致当前的选择被清除，默认true
+            unselectCancel : "",        //一种方法来指定元素，会忽略unselectauto选项，默认''
+            selectOverlap : true,       //确定用户是否被允许选择被事件占用的时间段，默认true可占用时间段
+            selectAllow : function(selectInfo){ //精确的编程控制用户可以选择的地方，返回true则表示可选择，false表示不可选择
+                console.log("↓↓↓selectConstraint↓↓↓");
+                console.log("start:"+selectInfo.start+"|end:"+selectInfo.end+"|resourceId:"+selectInfo.resourceId);
+                return true;
+            },
+
+            lazyFetching : true,        //是否启用懒加载技术--即只取当前条件下的视图数据，其它数据在切换时触发，默认true只取当前视图的，false是取全视图的
+            defaultTimedEventDuration : "02:00:00",     //在Event Object中如果没有end参数时使用，如start=7:00pm，则该日程对象时间范围就是7:00~9:00
+            defaultAllDayEventDuration : { days: 1 },  //默认1天是多长，（有的是采用工作时间模式，所以支持自定义）
+
+            loading : function(isLoading, view){ //视图数据加载中、加载完成触发
+                console.log("↓↓↓loading↓↓↓");
+                if(isLoading == true){
+                    console.log("view:"+view+",开始加载");
+                }else if(isLoading == false){
+                    console.log("view:"+view+",加载完成");
+                }else{
+                    console.log("view:"+view+",除非天塌下来否则不会进这个分支");
+                }
+            },
+         nextDayThreshold : "00:00:00",  //当一个事件的结束时间跨越到另一天，最短的时间，它必须为它的渲染，如果它在这一天。
+            eventOrder : "title",           //多个相同的日程数据排序方式，String / Array / Function, 默认值: "title"
+            eventRender : function(event, element, view) {          //当Event对象开始渲染时触发
+                console.log("eventRender():"+event.title);
+            },
+
+
+            editable: false,                 //支持Event日程拖动修改，默认false
+            eventStartEditable : false,      //Event日程开始时间可以改变，默认true，如果是false其实就是指日程块不能随意拖动，只能上下拉伸改变他的endTime
+            eventDurationEditable : false,  //Event日程的开始结束时间距离是否可以改变，默认true，如果是false则表示开始结束时间范围不能拉伸，只能拖拽
+
+
+            eventOverlap : true,            //拖拽时是否重叠
+
+            eventResizeStart : function( event, jsEvent, ui, view ) {       //日程大小调整开始时触发
+                console.log("eventResizeStart():"+event.title);
+            },
+            eventResizeStop : function(event, jsEvent, ui, view){           //日程大小调整停止时触发
+                console.log("eventResizeStop():"+event.title);
+            },
+            eventResize : function(event, delta, revertFunc, jsEvent, ui, view){    //日程大小调整完成并已经执行更新时触发
+                console.log("eventResize():"+event.title);
+            },
+            events: mature_taskdata
+
+
+
+        });
+
+
+        $("#zhixing").click(function() {
+            $("#zhixingclose").click();
+            $('#myModal2').modal('show');
+        });
+    });
+    
+
+
+
+
+
+        // 时间格式转换函数
+        function formatDateTime(inputTime) {
+            var date = new Date(inputTime);
+            var y = date.getFullYear();
+            var m = date.getMonth() + 1;
+            m = m < 10 ? ('0' + m) : m;
+            var d = date.getDate();
+            d = d < 10 ? ('0' + d) : d;
+            var h = date.getHours();
+            h = h < 10 ? ('0' + h) : h;
+            var minute = date.getMinutes();
+            var second = date.getSeconds();
+            minute = minute < 10 ? ('0' + minute) : minute;
+            second = second < 10 ? ('0' + second) : second;
+            return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;
+        };
+
+        // 获取url参数
+        function GetRequest() {
+
+        var url = decodeURI(location.search); //获取url中"?"符后的字串
+        var theRequest = new Object();
+        if (url.indexOf("?") != -1) {
+            var str = url.substr(1);
+            strs = str.split("&");
+            for(var i = 0; i < strs.length; i ++) {
+                theRequest[strs[i].split("=")[0]]=unescape(strs[i].split("=")[1]);
+            }
+        }
+        return theRequest;
+    }
+
+
+
+</script>
+
+
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark rounded">
+    <ul class="navbar-nav">
+
+
+        <li class="nav-item"    style="margin-left:30px; ">
+            <img class="image-responsive" src="/images/logo.png"   height="50" width="80"  alt="logo"/>
+        </li>
+
+
+        <li class="nav-item" style="margin-left:30px;margin-top:15px;">
+            <a class="navbar-brand" href="#" style="font-size: 14pt">动态仓存管理系统</a>
+        </li>
+    </ul>
+
+
+    <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent" >
+        <ul class="navbar-nav" id="headerNav" >
+            <form class="form-inline" role="search">
+                <div class="space" style="">
+                    <input type="text" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default" >Submit</button>
+            </form>
+
+            <img class="img-circle image-responsive" src="/images/pic.png" style=" border-radius:50%;margin-top: 15px;"  height="40" width="40"  alt="头像" id="touxiang"/>
+
+            <ul class="nav nav-pills">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" style="color: aliceblue;margin-top: 15px" id="nkn"></a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">个人中心</a>
+                        <a class="dropdown-item" href="#">服务购买</a>
+                        <a class="dropdown-item" href="#">退出</a></div>
+                </li>
+            </ul>
+        </ul>
+    </div>
+
+</nav>
+<div>
+    <ul class="navbar-nav nav-pills navitem   col-md-2" style="height: 860px;float: left;background:#465269;padding-bottom: 0;padding-right: 0;">
+
+        <li class="nav-item" >
+            <iframe width="100%" scrolling="no" height="60" frameborder="0" allowtransparency="true" src="http://i.tianqi.com/index.php?c=code&id=12&color=%23FFFFFF&bdc=%23&icon=3&num=1&site=12" style="padding-left: 10% "></iframe>
+        </li>
+        <li class="nav-item">
+
+            <a class="nav-link  cebianlan" href="#"> <img class=" image-responsive" src="images/状态F.png" style="margin-right: 20px" height="40px" width="40px"  alt="状态"/> 状态仪表</a>
+        </li>
+        <li class="nav-item ">
+            <a class="nav-link cebianlan " href="#" id="bt_jh"><img class=" image-responsive" src="images/任务计划.png" style="margin-right: 20px" height="40px" width="40px"  alt="状态"/>任务计划</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link cebianlan" href="#" id="bt_kb"><img class=" image-responsive" src="images/看板.png"  style="margin-right: 20px"height="40px" width="40px"  alt="状态"/>看&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;板</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link cebianlan" href="#"><img class=" image-responsive" src="images/项目.png" style="margin-right: 20px" height="40px" width="40px"  alt="状态"/>项&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;目</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link cebianlan" href="#"><img class=" image-responsive pull-left"  style="margin-right: 20px" src="images/报表日志.png"  height="40px" width="40px"  alt="状态"/>报表日志</a>
+        </li>
+        <li class="nav-item  " >
+
+            <a class="nav-link cebianlan" href="#" id="bt_set"><img class=" image-responsive" style="margin-right: 20px"  src="images/设置.png"  height="40px" width="40px"  alt="状态"/>设&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;置</a>
+        </li>
+    </ul>
+
+
+    <div>
+        <nav class="navbar navbar-expand-sm " style="background-color: rgb(230,238,248);">
+            <ul class="navbar-nav" style="height: 100%;width: 100%;">
+                <li class="nav-item">
+                    <div class="btn-group">
+
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" id="renwu" >
+                                任务类型
+                            </button>
+                            <div class="dropdown-menu" id="renwulie1" >
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item" style="padding-left:50%; font-size: 26px; ">
+                    仓存任务管理看板
+                </li>
+
+                <!--<li class="nav-item" style="padding-left:20%; ">-->
+                <!--<button type="button" class="btn btn-light"><img class=" image-responsive" src="images/向后.png"  id="qian" alt="向后"/></button>-->
+                <!--</li>-->
+                <!--<li class="nav-item" style="padding-left:10px; ">-->
+                    <!--<button type="button" class="btn btn-light" id="data"></button>-->
+                <!--</li>-->
+                <!--<li class="nav-item" style="padding-left:10px; ">-->
+                    <!--<button type="button" class="btn btn-light"><img class=" image-responsive" src="images/向前.png" id="hou" alt="向前"/></button>-->
+                <!--</li>-->
+
+            </ul>
+
+
+
+                <div class="collapse navbar-collapse justify-content-end" >
+                    <ul class="navbar-nav" >
+                        <li class="nav-item" style="margin-right: 20px ">
+
+
+
+
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" id="renwu1" >
+                                    新建任务
+                                </button>
+                                <div class="dropdown-menu" id="renwulie_1" >
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+        </nav>
+
+        <div  id='calendar'style="float:right;height:70%;width:83%" >
+
+		</div>
+
+    </div>
+</div>
+<!--填写任务-->
+<div class="modal fade" id="myModal2">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header bg-success">
+                <h4 class="modal-title">新建任务</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 填写任务 -->
+            <div class="modal-body">
+                <div id="renwutianxie">
+
+                    <form class="form-horizontal" role="form"  id="formDemo"  >
+                        <div class="form-group " >
+                            <label for="t_id" class="col-sm-2 control-label">任务号</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" name="t_id" id="t_id" >
+                            </div>
+                        </div>
+                        <div class="form-group hied" >
+                            <label for="t_typeid" class="col-sm-2 control-label">任务类型</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control col-sm-4"  name="t_typeid" id="t_typeid" >
+                            </div>
+                        </div>
+
+                        <div class="form-group hidecq" >
+                            <label for="t_creator" class="col-sm-2 control-label">任务创建人</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control col-sm-4" name="t_creator" id="t_creator" >
+                            </div>
+                        </div>
+
+                        <!--这是隐藏的-->
+                        <div class="form-group hidecq"  >
+                            <label for="t_object" class="col-sm-2 control-label">任务对象</label>
+                            <div class="col-sm-10">
+
+                                <input type="text" class="form-control col-sm-4" id="t_object" name="t_object" />
+                            </div>
+                        </div>
+
+
+
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#object_modal">任务对象 </button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                                    基本任务内容
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item btn btn-primary" data-toggle="modal" data-target="#wupinmodal" >物品</a>
+                                    <a class="dropdown-item btn btn-primary" data-toggle="modal" data-target="#out_modal" >仓位</a>
+                                </div>
+                            </div>
+                            &nbsp<input type="text" class="form-control" name="t_content" id="t_cont" disabled="true" >
+                        </div>
+
+
+
+
+
+                        <!--这是隐藏的-->
+                        <div class="form-group hidecq">
+                            <label for="t_content" class="col-sm-2 control-label">任务内容</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="t_content" id="t_content" >
+
+                            </div>
+
+
+
+
+                        </div>
+
+
+
+                        <div class="form-group">
+                            <label for="t_priority" class="col-sm-2 control-label">优先级</label><div class="col-sm-10">
+                            <select class="form-control col-sm-4" id="t_priority" name="t_priority">
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                            </select>
+                        </div>
+                        </div>
+
+
+
+
+                        <div class="form-group">
+                            <label for="t_req_stime" class="col-sm-3 control-label">任务要求起始时间</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" id="t_req_stime" name="t_req_stime">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="t_req_ftime" class="col-sm-3 control-label">任务结要求束时间</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" id="t_req_ftime" name="t_req_ftime">
+                            </div>
+                        </div>
+
+
+
+                        <div class="form-group">
+                            <label for="t_info"class="col-sm-2 control-label">任务说明</label><div class="col-sm-10">
+                            <textarea class="form-control" rows="5" id="t_info" placeholder="请输入任务说明（可不填）" name="t_info" ></textarea></div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-4">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="is_divide" name="is_divide"> 任务能否被分解
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+
+
+
+                </div>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="sub">提交</button>
+                <button type="button" class="btn btn-secondary"  data-dismiss="modal">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- 物品模态框 -->
+<div class="modal fade " id="wupinmodal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">物品选择</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <ul id="browser" class="filetree treeview-famfamfam">
+
+                </ul>
+                <div >
+                    <table class="table table-hover">
+                        <thead>
+                        <!--<tr>-->
+                            <!--<th>仓位ID</th>-->
+                            <!--<th>物品ID</th>-->
+                            <!--<th>物品名称</th>-->
+                            <!--<th>物料参数区别参数1</th>-->
+                            <!--<th>物料参数区别参数2</th>-->
+                            <!--<th>数量</th>-->
+                            <!--<th>单位</th>-->
+                            <!--<th>入库时间</th>-->
+                            <!--<th>PR号</th>-->
+                            <!--<th>物品存放状态</th>-->
+                            <!--<th>批次号/BID/PID</th>-->
+
+                        <!--</tr>-->
+
+                        <tr>
+                            <th>选中</th>
+                            <th>选择数量</th>
+                            <th>仓位</th>
+                            <th>物品</th>
+                            <th>物品名称</th>
+                            <th>数量</th>
+                            <th>单位</th>
+                            <th>入库时间</th>
+                        </tr>
+                        </thead>
+                        <tbody id="whs_record">
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="matl_tj">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" >关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--位置选择模态框-->
+<div class="modal fade " id="out_modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">仓位</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <ul id="out_brower" class="filetree treeview-famfamfam">
+
+                </ul>
+                <div >
+                    <table class="table table-hover">
+                        <thead>
+                        <!--<tr>-->
+                        <!--<th>仓位ID</th>-->
+                        <!--<th>物品ID</th>-->
+                        <!--<th>物品名称</th>-->
+                        <!--<th>物料参数区别参数1</th>-->
+                        <!--<th>物料参数区别参数2</th>-->
+                        <!--<th>数量</th>-->
+                        <!--<th>单位</th>-->
+                        <!--<th>入库时间</th>-->
+                        <!--<th>PR号</th>-->
+                        <!--<th>物品存放状态</th>-->
+                        <!--<th>批次号/BID/PID</th>-->
+
+                        <!--</tr>-->
+
+                        <tr>
+                            <th>选中</th>
+                            <th>仓位</th>
+                            <th>仓位报警</th>
+                            <th>仓位容积百分比</th>
+                            <th>仓位可用容量</th>
+                            <th>仓位总容量</th>
+                        </tr>
+                        </thead>
+                        <tbody id="in_out">
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary i" data-dismiss="modal" id="weizhi_tj">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" >关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--任务对象选择-->
+<div class="modal fade " id="object_modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">人员</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <ul id="object_brower" class="filetree treeview-famfamfam">
+
+                </ul>
+                <div >
+                    <table class="table table-hover">
+                        <thead>
+
+                        <tr>
+                            <th>选中</th>
+                            <th>名称</th>
+                            <th>手机</th>
+
+                        </tr>
+                        </thead>
+                        <tbody id="object_body">
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary i" data-dismiss="modal" id="object_tj">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" >关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--任务详情查看窗口-->
+<div class="modal fade " id="task_view">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">任务详情</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <div >
+                    <table class="table table-hover">
+                        <thead>
+                        </thead>
+                        <tbody >
+                        <tr>
+                            <td>任务号</td>
+                            <td id="taskview_id"></td>
+                        </tr>
+                        <tr>
+                            <td>任务类型</td>
+                            <td id="taskview_type"></td>
+                        </tr>
+                        <tr>
+                            <td>任务内容</td>
+                            <td id="taskview_content"></td>
+                        </tr>
+                        <tr>
+                            <td>优先级</td>
+                            <td id="taskview_priority"></td>
+                        </tr>
+                        <tr>
+                            <td>任务对象</td>
+                            <td id="taskview_object"></td>
+                        </tr>
+                        <tr>
+                            <td>创建人</td>
+                            <td id="taskview_creator"></td>
+                        </tr>
+                        <tr>
+                            <td>任务创建时间</td>
+                            <td id="taskview_ctime"></td>
+                        </tr>
+                        <tr>
+                            <td>任务要求起始时间</td>
+                            <td id="taskview_req_stime"></td>
+                        </tr>
+                        <tr>
+                            <td>任务结要求束时间</td>
+                            <td id="taskview_req_ftime"></td>
+                        </tr>
+                        <tr>
+                            <td>任务响应时间</td>
+                            <td id="taskview_rtime"></td>
+                        </tr>
+                        <tr>
+                            <td>任务开始时间</td>
+                            <td id="taskview_stime"></td>
+                        </tr>
+                        <tr>
+                            <td>任务完成时间</td>
+                            <td id="taskview_ftime"></td>
+
+                        </tr>
+                        <tr>
+                            <td>任务状态ID</td>
+                            <td id="taskview_statusid"></td>
+                        </tr>
+                        <tr>
+                            <td>任务说明</td>
+                            <td id="taskview_info"></td>
+                        </tr>
+
+
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary " data-toggle="modal" data-target="#taskzhixing" id="zhixing">执行</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"  id="zhixingclose">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+<button type="button" class="btn btn-primary hied" data-toggle="modal" data-target="#taskzhixing" id="taskzhixing_hide"></button>
+<button type="button" class="btn btn-primary hied" data-toggle="modal" data-target="#task_view" id="taskview_bt_hide"></button>
+<footer class="text-center" style="clear: both">
+    <div class="container">
+
+        <div >
+            <p>Copyright © Ramo. All rights reserved.</p>
+        </div>
+
+    </div>
+</footer>
+
+</body>
+</html>

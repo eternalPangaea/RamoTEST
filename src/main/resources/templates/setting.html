@@ -1,0 +1,1980 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>iwms</title>
+    <style>
+        .nav-item a{ font-family:"微软雅黑"}
+        .space{
+            display: inline-block;
+            padding: .5em 1em;
+        }
+        .navbar-nav{
+            display: inline-block;
+            padding: 0.5em 10em;
+
+        }
+        .form-inline{
+
+
+            padding: .5em 4em;
+        }
+
+        .cebianlan{font-family:"微软雅黑";color: aliceblue;text-align: center;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://static.runoob.com/assets/js/jquery-treeview/jquery.treeview.css" />
+
+
+
+<script src="/js/jquery-3.3.1.min.js"></script>
+<script src="/js/popper.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+
+
+
+<script type="text/javascript" src="js/layer/layer.js"></script>
+<script type="text/javascript" src="js/context/context.js"></script>
+<script type="text/javascript" src="js/drag.js" ></script>
+<link rel="stylesheet" type="text/css" href="js/context/context.standalone.css">
+<script src="http://static.runoob.com/assets/js/jquery-treeview/jquery.treeview.js" type="text/javascript"></script>
+
+
+
+<style type="text/css">
+    .list{margin:0;padding:0;font:14px/1.5em simsun;overflow:hidden;}
+    #canvas{position:absolute;z-index:9;border:2px dashed #ccc;padding:10px;background:#fff;height: 80%;width: 80%;}
+    .transparent{filter:alpha(opacity=50);-moz-opacity:0.5;-khtml-opacity:0.5;opacity:0.5;}
+    .box{width:200px;height:100px;cursor:move;position:absolute;top:30px;left:30px;z-index:99;}
+    .box .bg{width:100%;height:100%;background-color:orange;}
+    .box .coor{width:10px;height:10px;overflow:hidden;cursor:se-resize;position:absolute;right:0;bottom:0;background-color:red;}
+    .box .content{position:absolute;left:50%;top:50%;z-index:99;text-align:center;font:bold 14px/1.5em simsun;}
+    #toolbar{position:absolute;left:10px;top:10px;z-index:88;}
+    .dalabel{margin-left: 20px }
+    .danwei{margin-left: 7px}
+</style>
+
+
+<script>
+
+
+
+
+    $(document).ready(function() {
+        // 首先获取当前参数
+        var Request = new Object();
+        Request = GetRequest();
+        var user_name = Request['user_name'];
+        var url = Request['url'];
+        var logintl_id = Request['logintl_id'];
+        var nickname = Request['nickname'];
+        var image_file = Request['image_file'];
+        $("#nkn").text(nickname + "");
+        $("#touxiang").attr('src', image_file);
+        var data1 = JSON.stringify({"logintl_id": logintl_id});
+
+        //判断是否登录
+        if (user_name == null) {
+            window.location.href = "http://http://114.115.172.113/login";
+        }
+
+        $("#bt_jh").click(function () {
+            window.location.href="http://http://114.115.172.113/h"+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;
+        });
+        $("#bt_kb").click(function () {
+            window.location.href="http://http://114.115.172.113/broad"+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;
+        });
+        $("#bt_set").click(function () {
+            window.location.href="http://http://114.115.172.113/setting"+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;
+        });
+
+        var alldept=[];
+        var yginfo=[];
+        var allauthority=[];
+
+        // 单位表全抓取
+        $.ajax({
+            type: "GET",
+            dataType: "JSON",
+            url: "http://http://114.115.172.113/setting/alldanwei",
+            contentType: "application/json",
+            success: function (result) {
+                var dwlist = result;
+                for (i = 0; i < dwlist.length; i++) {
+                    var danweibiaoqian="<option>"+dwlist[i].danwei_name+"</option>";
+                    $('.danwei').each(function () {
+                        $(this).append(danweibiaoqian);
+                    });
+
+
+                    var biaoqian = "<tr><td>" + dwlist[i].danwei_name + "</td><td><a style='float: right' href='#' class='dw_delete' id='" + dwlist[i].danwei_id + "'>删除</a></td></tr>";
+                    $("#dw_info").append(biaoqian);
+
+                }
+
+                $(".dw_delete").click(function () {
+
+                    var dw_id = $(this).attr('id');
+                    var dwid = JSON.stringify({"danwei_id": dw_id});
+                    $.ajax({
+                        type: "DELETE",
+                        dataType: "JSON",
+                        data: dwid,
+                        url: "http://http://114.115.172.113/setting/deletedanwei",
+                        contentType: "application/json",
+                        success: function (result) {
+                            $("#titile_success").show();
+                            $("#success").text(result.message);
+                            $("#titile_success").fadeOut(3000);
+
+
+                        }
+                    });
+                });
+            }
+        });
+
+        // 这里是物品列表获取
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/setting/allmatl",
+            contentType:"application/json",
+
+            success:function(result){
+            var  allmatl=result;
+                for(i=0;i<allmatl.length;i++){
+                    var biaoqian=$(
+                        "<tr>" +
+                        "<td></td>" +
+                        "<td>"+allmatl[i].matl_id+"</td>" +
+                        "<td>"+allmatl[i].matl_name+"</td>" +
+                        "<td>"+allmatl[i].matl_parent+"</td>"+
+                        "<td>"+allmatl[i].model+"</td>"+
+                        "<td>"+allmatl[i].brand +"</td>"+
+                        "<td>"+ allmatl[i].difference1+"</td>"+
+                        "<td>"+allmatl[i].difference2 +"</td>"+
+                        "<td>"+allmatl[i].min_danwei +"</td>"+
+                        "<td><a href='#' class='edwupin' dataid='"+allmatl[i].matl_id+"' dataname='"+allmatl[i].matl_name+"' dataparent='"+allmatl[i].matl_parent+"' datamodel='"+allmatl[i].model+"' databrand='"+allmatl[i].brand +"' datadiff1='"+ allmatl[i].difference1+"' datadiff2='"+allmatl[i].difference2 +"'datadw1='"+allmatl[i].min_danwei +"' datadw2='"+allmatl[i].danwei1+"' datadw3='"+allmatl[i].danwei2+"' datarel1='"+allmatl[i].relat_danwei1+"' datarel2='"+allmatl[i].relat_danwei2+"' datarel3='"+allmatl[i].relat_danwei12+"'  >编辑</a></td>"+
+                        "</tr>"
+                );
+
+                    $("#wp_tb").append(biaoqian);
+                }
+                $('.edwupin').click(function () {
+                    $('#ygsz').hide();
+                    $('#jssz').hide();
+                    $('#bmsz').hide();
+                    $('#wpflsz').hide();
+                    $('#wpsz').hide();
+                    $('#dwsz').hide();
+                    $('#newjs').hide();
+                    $('#edyg').hide();
+                    $('#edjspage').hide();
+                    $('#qxsz').hide();
+                    $('#newjspage').hide();
+                    $('#new_wupin_page').hide();
+                    $('#ed_wupin_page').show();
+                    var matl_id="";
+                    var matl_name="";
+                     var matl_parent="";
+                     var model="";
+                     var brand="";
+                     var difference1="";
+                     var difference2="";
+                     var min_danwei=-"";
+                     var danwei1="";
+                     var danwei2="";
+                     var relat_danwei1="";
+                     var relat_danwei2="";
+                     var relat_danwei12="";
+
+                     matl_id= $(this).attr("dataid");
+                     matl_name=$(this).attr("dataname=");
+                     matl_parent=$(this).attr("dataparent");
+                     model1=$(this).attr("datamodel");
+                     brand=$(this).attr("databrand");
+                     difference1=$(this).attr("datadiff1");
+                     difference2=$(this).attr("datadiff2");
+                     min_danwei=$(this).attr("datadw1");
+                     danwei1=$(this).attr("datadw2");
+                     danwei2=$(this).attr("datadw3");
+                     relat_danwei1=$(this).attr("datarel1");
+                     relat_danwei2=$(this).attr("datarel2");
+                     relat_danwei12=$(this).attr("datarel3");
+
+
+                     $("#edwpid").text(matl_id);
+                     $('#ed_matl_id').val(matl_id);
+                     $('#ed_matl_name').val(matl_name);
+
+                     $('#ed_matl_parent').val(matl_parent);
+                     var parlist=$('#ed_wpmu').children();
+                     for(i=0;i<parlist.length;i++){
+                         if(parlist[i].text()==matl_parent){
+                             parlist[i].attr("selected","true");
+                             break;
+                         }
+                     }
+
+                     $('#ed_model').val(model1);
+                     $('#ed_brand').val(brand);
+                     $('#ed_difference1').val(difference1);
+                     $('#ed_difference2').val(difference2);
+
+                     $('#ed_danwei1').val(min_danwei);
+                     $('#ed_danwei2').val(danwei1);
+                     $('#ed_min_danwei').val(danwei2);
+
+                     $('#ch_dw1').children();
+
+
+
+                });
+
+
+
+            },
+            error:function () {
+            }
+        });
+
+
+
+        $('#new_wp_tj').click(function () {
+            $('#new_min_danwei').val($('#ch_dw1').val());
+            $('#new_danwei1').val($('#ch_dw2').val());
+            $('#new_danwei2').val($('#ch_dw3').val());
+            $('#new_matl_parent').val($('#new_wpmu').val());
+            var jsonuserinfo = $("#wpjsform").serializeObject();
+            var formjson = JSON.stringify(jsonuserinfo);
+            console.log(formjson);
+            $.ajax({
+                type:"POST",
+                dataType: "JSON",
+                data:formjson,
+                url:"http://http://114.115.172.113/setting/addmatl",
+                contentType:"application/json",
+                success:function(result){
+                    $("#titile_success").show();
+                    $("#success").text(result.message);
+                    $("#titile_success").fadeOut(3000);
+
+            }
+            });
+        });
+
+
+
+
+
+
+
+
+        {
+
+        // 获取所有角色
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/setting/allch",
+            contentType:"application/json",
+            success:function(result){
+                var allch=result;
+                for(i=0;i<allch.length;i++){
+                 var biaoqian=$("<tr><td>"+ allch[i].ch_authorityname+"</td><td  ><a style='float:right' dataid='"+allch[i].ch_id+"' dataname='"+allch[i].ch_authorityname+"' dataauids='"+allch[i].authority_ids+"' class='ed_js_href' href='#'>编辑</a></td></tr>");
+                $('#js_tb').append(biaoqian);
+                }
+                // 绑定角色编辑连接事件
+                $('.ed_js_href').click(function () {
+                    $('#ygsz').hide();
+                    $('#jssz').hide();
+                    $('#bmsz').hide();
+                    $('#wpflsz').hide();
+                    $('#wpsz').hide();
+                    $('#dwsz').hide();
+                    $('#newyg').hide();
+                    $('#edjspage').show();
+                    var dataid=$(this).attr("dataid");
+                    var ch_authorityname =$(this).attr(" dataname");
+                    var authority_ids=$(this).attr("dataauids");
+                    var aulist=[];
+                    $('#ed_ch_id').val(dataid);
+                    $('#ed_ch_authorityname').val(ch_authorityname);
+                    aulist= authority_ids.split(",");
+                for(i=0;i<allauthority.length;i++) {
+                    for(j=0;j<allauthority.length;j++) {
+
+                        var biaoqian = $(" <label class=\"form-check-label\"><input type=\"checkbox\"  class=\"form-check-input newjs_checkbox\" value='" + allauthority[i].authority_id + "'>" + allauthority[i].authority_name + "</label>");
+
+                        $('#auchecklist').append(biaoqian);
+
+                    }
+                }
+
+                });
+            },
+            error:function () {
+            }
+        });
+
+        // 获取所有权限
+        $.ajax({
+            type:"GET",
+            dataType: "JSON",
+            url:"http://http://114.115.172.113/setting/allauthority",
+            contentType:"application/json",
+            success:function(result){
+                 allauthority=result;
+                for(i=0;i<allauthority.length;i++){
+                    var biaoqian=$(" <label class=\"form-check-label\"><input type=\"checkbox\" class=\"form-check-input newjs_checkbox\" value='"+allauthority[i].authority_id+"'>"+ allauthority[i].authority_name+"</label>");
+
+                    $('#auchecklist').append(biaoqian);
+                }
+            },
+            error:function () {
+            }
+        });
+
+
+        // 新增角色
+        $('#newjs_tj').click(function () {
+            var authority_ids="";
+            var new_ch_authorityname="";
+            new_ch_authorityname=  $('#new_ch_authorityname').val();
+            $('.newjs_checkbox').each(function () {
+                if($(this).prop("checked")){
+                    authority_ids=authority_ids+$(this).val()+",";
+
+                }
+            });
+            authority_ids = authority_ids.substr(0,  authority_ids.length - 1);
+            var newjs = JSON.stringify({"ch_authorityname":new_ch_authorityname,"authority_ids":authority_ids});
+            $.ajax({
+                type: "POST",
+                dataType: "JSON",
+                data:newjs,
+                url: "http://http://114.115.172.113/setting/addch",
+                contentType: "application/json",
+                success: function (result) {
+                    $("#titile_success").show();
+                    $("#success").text(result.message);
+                    $("#titile_success").fadeOut(3000);
+
+                }
+            });
+        });
+
+            // 全部门获取
+            $.ajax({
+                type: "GET",
+                dataType: "JSON",
+                url: "http://http://114.115.172.113/setting/alldept",
+                async: false,
+                contentType: "application/json",
+                success: function (result) {
+                    alldept = result;
+                    for (i = 0; i < alldept.length; i++) {
+                        // 表格显示
+                        var dept_bq = $(" <tr> <td>" + result[i].dept_name + "</td><td><a style='float: right' href='#' data-toggle=\"modal\" data-target=\"#eddept\" class='bt_ed' dataid='" + result[i].dept_id + "'>编辑</a></td></tr>");
+                        $("#dept_table").append(dept_bq);
+
+                        // 模态框显示
+                        var down_bq = $("<label class=\"form-check-label\" style='width: 20%'><input type=\"checkbox\" class=\"form-check-input dept_option\" id='" + result[i].dept_id + "' value=\"\">" + result[i].dept_name + "</label>");
+                        $('#xsbm').append(down_bq);
+                    }
+
+
+                    $(".bt_ed").click(function () {
+                        $('#edbm').empty();
+                        var bmid = $(this).attr("dataid");
+
+                        for (i = 0; i < alldept.length; i++) {
+                            if (alldept[i].dept_id == bmid) {
+                                $('#edbm_name').attr('dataid', bmid);
+                                $('#edbm_name').val(alldept[i].dept_name);
+                                var subdept_ids = alldept[i].subdept_ids.split(",");
+                                var tiaochu = false;
+                                for (j = 0; j < alldept.length; j++) {
+                                    var check = "";
+                                    for (k = 0; k < subdept_ids.length; k++) {
+                                        if (subdept_ids[k] == alldept[j].dept_id) {
+                                            check = " checked='true' ";
+                                            tiaochu = true;
+                                            break;
+                                        }
+                                    }
+                                    var down_bq = $("<label class=\"form-check-label\" style='width: 20%'><input type=\"checkbox\" " + check + " class=\"form-check-input ed_dept_option\" dataid='" + alldept[j].dept_id + "' value=\"\">" + alldept[j].dept_name + "</label>");
+                                    $('#edbm').append(down_bq);
+                                }
+                                break;
+                            }
+                        }
+
+                    });
+
+                }
+            });
+
+            // 全员工账号获取
+            $.ajax({
+                type: "GET",
+                dataType: "JSON",
+                async: false,
+                url: "http://http://114.115.172.113/setting/alluser",
+                contentType: "application/json",
+                success: function (result) {
+                    yginfo = result;
+                    for (i = 0; i < yginfo.length; i++) {
+                        for (j = 0; j < alldept.length; j++) {
+                            if (yginfo[i].dept_id == alldept[j].dept_id) {
+                                yginfo[i].dept_id = {dept_id: yginfo[i].dept_id, dept_name: alldept[j].dept_name};
+                                break;
+                            }
+                            if (j == (alldept.length - 1)) {
+                                yginfo[i].dept_id = {dept_id: yginfo[i].dept_id}
+                            }
+
+                        }
+                        if (yginfo[i].phone == null) {
+                            yginfo[i].phone = " ";
+                        }
+                        if (yginfo[i].email == null) yginfo[i].email = " ";
+
+                    }
+                    addygInfo(yginfo);
+                }
+            });
+
+
+            newyg_bm_info(alldept);
+
+            // 新增部门提交
+            $("#newdept_tj").click(function () {
+                var subdept_ids = "";
+                $('.dept_option').each(function () {
+                    subdept_ids = subdept_ids + $(this).attr("id") + ",";
+                });
+                subdept_ids = subdept_ids.substr(0, subdept_ids.Length - 1);
+                var newdept = JSON.stringify({"dept_name": $('#deptname').val(), "subdept_ids": subdept_ids});
+                $.ajax({
+                    type: "POST",
+                    dataType: "JSON",
+                    data: newdept,
+                    url: "http://http://114.115.172.113/setting/adddept",
+                    contentType: "application/json",
+                    success: function (result) {
+                        $("#titile_success").show();
+                        $("#success").text(result.message);
+                        $("#titile_success").fadeOut(3000);
+                        location.reload();
+
+                    }
+                });
+
+
+            });
+
+            // 修改部门提交
+            $('#eddept_tj').click(function () {
+                var dept_id = "";
+                var dept_name = "";
+                var subdept_ids = "";
+                dept_id = $('#edbm_name').attr("dataid");
+                dept_name = $('#edbm_name').val();
+
+                $('.ed_dept_option').each(function () {
+                    if ($(this).prop('checked')) {
+                        subdept_ids = subdept_ids + $(this).attr('dataid') + ",";
+                    }
+                });
+
+                subdept_ids = subdept_ids.substr(0, subdept_ids.length - 1);
+                var eddept = JSON.stringify({"dept_id": dept_id, "dept_name": dept_name, "subdept_ids": subdept_ids});
+                $.ajax({
+                    type: "POST",
+                    dataType: "JSON",
+                    data: eddept,
+                    url: "http://http://114.115.172.113/setting/updatedept",
+                    contentType: "application/json",
+                    success: function (result) {
+                        $("#titile_success").show();
+                        $("#success").text(result.message);
+                        $("#titile_success").fadeOut(3000);
+
+
+                    }
+                });
+
+
+            });
+
+            // 新增员工提交
+            $('#newyg_tj').click(function () {
+
+                $('#bmhied').val($('#sel1').val());
+                var jsonuserinfo = $("#ygform").serializeObject();
+                var formjson = JSON.stringify(jsonuserinfo);
+                $.ajax({
+                    type: "POST",
+                    dataType: "JSON",
+                    url: "http://http://114.115.172.113/setting/adduser",
+                    data: formjson,
+                    contentType: "application/json",
+                    success: function (result) {
+                        $("#titile_success").show();
+                        $("#success").text(result.message);
+                        $("#titile_success").fadeOut(3000);
+
+                    }
+                });
+
+            });
+
+            // 提交编辑员工账号
+            $('#edyg_tj').click(function () {
+                $('#bmhied').val($('#sel1').val());
+                var jsonuserinfo = $("#edygform").serializeObject();
+                var formjson = JSON.stringify(jsonuserinfo);
+                $.ajax({
+                    type: "POST",
+                    dataType: "JSON",
+                    url: "http://http://114.115.172.113/setting/updateuser",
+                    data: formjson,
+                    contentType: "application/json",
+                    success: function (result) {
+                        $("#titile_success").show();
+                        $("#success").text(result.message);
+                        $("#titile_success").fadeOut(3000);
+
+                    }
+                });
+
+            });
+
+            // 人员删除
+            $('#edyg_del').click(function () {
+                var loginid_del = $('#ed_logintl_id').val();
+                var formjson = JSON.stringify({"logintl_id": loginid_del});
+                $.ajax({
+                    type: "DELETE",
+                    dataType: "JSON",
+                    url: "http://http://114.115.172.113/setting/deleteuser",
+                    data: formjson,
+                    contentType: "application/json",
+                    success: function (result) {
+                        $("#titile_success").show();
+                        $("#success").text(result.message);
+                        $("#titile_success").fadeOut(3000);
+
+                    }
+                });
+            });
+
+
+
+            //form转json
+            $.fn.serializeObject = function () {
+                var o = {};
+                var a = this.serializeArray();
+                $.each(a, function () {
+                    if (o[this.name]) {
+                        if (!o[this.name].push) {
+                            o[this.name] = [o[this.name]];
+                        }
+                        o[this.name].push(this.value || '');
+                    } else {
+                        o[this.name] = this.value || '';
+                    }
+                });
+                return o;
+            };
+
+
+            // 默认选择当前日期显示任务看板
+            // 日期加减函数（停用）
+            // function addDate(date,days){
+            //     var d=new Date(date);
+            //     d.setDate(d.getDate()+days);
+            //     var month=d.getMonth()+1;
+            //     var day = d.getDate();
+            //     if(month<10){
+            //         month = "0"+month;
+            //     }
+            //     if(day<10){
+            //         day = "0"+day;
+            //     }
+            //     var val = d.getFullYear()+"/"+month+"/"+day;
+            //     return val;
+            // }
+            // var myDate = new Date();
+            // var beforeday=addDate(myDate,-7);
+            // var viewdate=beforeday+"-"+myDate.toLocaleDateString();
+            // $("#data").text(viewdate);
+            // // 日期初始化
+            // $("#data").click(function () {
+            //     var myDate = new Date();
+            //     var beforeday=addDate(myDate,-7);
+            //     var viewdate=beforeday+"-"+myDate.toLocaleDateString();
+            //     $("#data").text(viewdate);
+            // });
+            // // 日期前进按钮
+            // $("#qian").click(function(){
+            //     // 字符串转日期
+            //     var dangqian= $("#data").text();
+            //     var days= new Date(Date.parse( dangqian.split("-")[0].replace(/-/g,"/")));
+            //     var beforeday=addDate(days,-7);
+            //     var viewdate=beforeday+"-"+days.toLocaleDateString();
+            //     $("#data").text(viewdate);
+            // });
+            //     // 日期后退按钮
+            // $("#hou").click(function () {
+            //     // 字符串转日期
+            //     var dangqian= $("#data").text();
+            //     var days= new Date(Date.parse( dangqian.split("-")[1].replace(/-/g,"/")));
+            //     var beforeday=addDate(days,7);
+            //     var viewdate=days.toLocaleDateString()+"-"+beforeday;
+            //     $("#data").text(viewdate);
+            // });
+            //
+
+            $("#t_content").hide();
+            $(".hied").hide();
+            $("#t_object").hide();
+            $(".hidecq").hide();
+            $("#lasheng").click(function () {
+                $("#ck_meau").fadeToggle();
+            });
+            $("#ckm").hide();
+            $("#btn_lock").click();
+
+            // 页面跳转
+            $("#ygszbt").click(function () {
+                $('#ygsz').show();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newjs').hide();
+                $('#edyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+            });
+
+            $("#bmszbt").click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').show();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newyg').hide();
+                $('#edyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+            });
+
+            $("#jsszbt").click(function () {
+                $('#bmsz').hide();
+                $('#ygsz').hide();
+                $('#jssz').show();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newyg').hide();
+                $('#edyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+            });
+
+            $("#wpflszbt").click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').show();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#edyg').hide();
+                $('#newyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+            });
+
+            $("#wpszbt").click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').show();
+                $('#dwsz').hide();
+                $('#newyg').hide();
+                $('#edyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+
+            });
+
+            $("#newygbt").click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newyg').show();
+                $('#edyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+            });
+
+           $('#qxszbt').click(function () {
+               $('#ygsz').hide();
+               $('#jssz').hide();
+               $('#bmsz').hide();
+               $('#wpflsz').hide();
+               $('#wpsz').hide();
+               $('#dwsz').hide();
+               $('#newyg').hide();
+               $('#edyg').hide();
+               $('#edjspage').hide();
+               $('#qxsz').show();
+               $('#newjspage').hide();
+               $('#new_wupin_page').hide();
+               $('#ed_wupin_page').hide();
+           });
+
+            // 单位设置按钮
+            $("#dwszbt").click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').show();
+                $('#newyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+
+            });
+
+            $('#new_js_btn').click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').show();
+                $('#new_wupin_page').hide();
+                $('#ed_wupin_page').hide();
+            });
+
+
+            $('#new_wp_btn').click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newyg').hide();
+                $('#edjspage').hide();
+                $('#qxsz').hide();
+                $('#newjspage').hide();
+                $('#new_wupin_page').show();
+                $('#ed_wupin_page').hide();
+            });
+
+            // 新增单位设置
+            $("#newdw_tj").click(function () {
+                var dwname = $("#dwname").val();
+                if (dwname != null) {
+                    var dw_name = JSON.stringify({"danwei_id": 0, "danwei_name": dwname});
+                    $.ajax({
+                        type: "POST",
+                        dataType: "JSON",
+                        data: dw_name,
+                        url: "http://http://114.115.172.113/setting/adddanwei",
+                        contentType: "application/json",
+                        success: function (result) {
+                            $("#titile_success").show();
+                            $("#success").text(result.message);
+                            $("#titile_success").fadeOut(3000);
+
+                        }
+                    });
+                }
+            });
+
+
+            // 头像选择事件
+            $(".touxiang").click(function () {
+                var imgaddress = $(this).attr("src")
+                $('#image_file').val(imgaddress);
+                $('#ed_image_file').val(imgaddress);
+                $('#pic_choose_v').attr("src", imgaddress);
+                $('#ed_pic_choose_v').attr("src", imgaddress);
+                $('#shoutdowntx').click();
+            });
+
+
+        }
+
+
+
+        // 新建物品分类目录
+        $('#new_matlstr').click(function () {
+            $('#matl_structparent').val($('#matl_structparent_view').val());
+            var jsonuserinfo = $("#new_matlstr_form").serializeObject();
+            var formjson = JSON.stringify([jsonuserinfo]);
+            $.ajax({
+                type: "POST",
+                dataType: "JSON",
+                data:formjson,
+                url: "http://http://114.115.172.113/setting/addmatlstructs",
+                contentType: "application/json",
+                success: function (result) {
+                    $("#titile_success").show();
+                    $("#success").text(result.message);
+                    $("#titile_success").fadeOut(3000);
+                }
+            });
+        });
+
+        // 新增权限
+        $('#new_authority_tj').click(function () {
+           var new_authority_name=$('#new_authority_name').val();
+           var new_authority = JSON.stringify({"authority_name": new_authority_name});
+            $.ajax({
+                type:"POST",
+                dataType: "JSON",
+                url:"http://http://114.115.172.113/setting/addauthority",
+                data:new_authority,
+                contentType:"application/json",
+                success:function(result,status){
+                    $("#titile_success").show();
+                    $("#success").text(result.message);
+                    $("#titile_success").fadeOut(3000);
+            }
+        });
+        });
+
+
+
+
+    });
+
+
+    {
+
+        // 时间格式转换函数
+        function formatDateTime(inputTime) {
+            var date = new Date(inputTime);
+            var y = date.getFullYear();
+            var m = date.getMonth() + 1;
+            m = m < 10 ? ('0' + m) : m;
+            var d = date.getDate();
+            d = d < 10 ? ('0' + d) : d;
+            var h = date.getHours();
+            h = h < 10 ? ('0' + h) : h;
+            var minute = date.getMinutes();
+            var second = date.getSeconds();
+            minute = minute < 10 ? ('0' + minute) : minute;
+            second = second < 10 ? ('0' + second) : second;
+            return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
+        };
+
+        // 获取url参数
+        function GetRequest() {
+
+            var url = decodeURI(location.search); //获取url中"?"符后的字串
+            var theRequest = new Object();
+            if (url.indexOf("?") != -1) {
+                var str = url.substr(1);
+                strs = str.split("&");
+                for (var i = 0; i < strs.length; i++) {
+                    theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
+                }
+            }
+            return theRequest;
+        }
+
+        // 员工信息列表以及编辑事件
+        function addygInfo(yg) {
+            for (i = 0; i < yg.length; i++) {
+                var biaoqian = "<tr><td>" + yg[i].user_name + "</td><td>" + yg[i].nickname + "</td><td>" + yg[i].dept_id.dept_name + "</td><td>" + yg[i].phone + " " + "</td><td>" + yg[i].email + " " + "</td><td><a href='#' class='edyg' dataid='" + yg[i].logintl_id + "'>编辑</a></td></tr>"
+                $("#yginfo").append(biaoqian);
+
+            }
+            $('.edyg').click(function () {
+                $('#ygsz').hide();
+                $('#jssz').hide();
+                $('#bmsz').hide();
+                $('#wpflsz').hide();
+                $('#wpsz').hide();
+                $('#dwsz').hide();
+                $('#newyg').hide();
+                $('#edyg').show();
+            });
+            $('.edyg').click(function () {
+                var lgid = $(this).attr("dataid");
+                for (i = 0; i < yg.length; i++) {
+                    if (yg[i].logintl_id == lgid) {
+                        $('#ed_logintl_id').val(yg[i].logintl_id);
+                        $('#ed_user_name_view').val(yg[i].user_name);
+                        $('#ed_user_name').val(yg[i].user_name);
+                        $('#ed_user_password').val(yg[i].user_password);
+                        $('#ed_nickname').val(yg[i].nickname);
+                        $('#ed_phone').val(yg[i].phone);
+                        $('#ed_email').val(yg[i].email);
+                        $('#ed_image_file').val(yg[i].image_file);
+                        $('#ed_pic_choose_v').attr("src", yg[i].image_file);
+                        $('#ed_bmhied').val((yg[i].dept_id).dept_id);
+                        $('.edyg_bm').each(function () {
+                            if ($(this).val() == ((yg[i].dept_id).dept_id)) {
+                                $(this).attr("selected", "true");
+                            }
+                        });
+                        break;
+                    }
+                }
+            });
+
+        }
+
+        // 部门信息下拉菜单
+        function newyg_bm_info(alldept) {
+            for (i = 0; i < alldept.length; i++) {
+                var biaoqian = $("<option value=" + alldept[i].dept_id + ">" + alldept[i].dept_name + "</option>");
+                var biaoqian1 = $("<option class='edyg_bm' value=" + alldept[i].dept_id + ">" + alldept[i].dept_name + "</option>")
+                $('#sel1').append(biaoqian);
+                $('#ed_sel1').append(biaoqian1);
+            }
+        }
+
+    }
+</script>
+
+
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark ">
+    <ul class="navbar-nav">
+
+
+        <li class="nav-item"    style="margin-left:30px; ">
+            <img class="image-responsive" src="/images/logo.png"   height="50" width="80"  alt="logo"/>
+        </li>
+
+
+        <li class="nav-item" style="margin-left:30px;margin-top:15px;">
+            <a class="navbar-brand" href="#" style="font-size: 14pt">动态仓存管理系统</a>
+        </li>
+    </ul>
+
+
+    <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent" >
+        <ul class="navbar-nav" id="headerNav" >
+            <form class="form-inline" role="search">
+                <div class="space" style="">
+                    <input type="text" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default" >Submit</button>
+            </form>
+
+            <img class="img-circle image-responsive" src="/images/pic.png" style=" border-radius:50%;margin-top: 15px;"  height="40" width="40"  alt="头像" id="touxiang"/>
+
+            <ul class="nav nav-pills">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" style="color: aliceblue;margin-top: 15px" id="nkn"></a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">个人中心</a>
+                        <a class="dropdown-item" href="#">服务购买</a>
+                        <a class="dropdown-item" href="#">退出</a></div>
+                </li>
+            </ul>
+        </ul>
+    </div>
+
+</nav>
+
+
+<div>
+    <ul class="navbar-nav nav-pills navitem   col-md-2" style="height: 860px;float: left;background:#465269;padding-bottom: 0;padding-right: 0;">
+
+        <li class="nav-item" >
+            <iframe width="100%" scrolling="no" height="60" frameborder="0" allowtransparency="true" src="http://i.tianqi.com/index.php?c=code&id=12&color=%23FFFFFF&bdc=%23&icon=3&num=1&site=12" style="padding-left: 10% "></iframe>
+        </li>
+        <li class="nav-item">
+
+            <a class="nav-link  cebianlan" href="#"> <img class=" image-responsive" src="images/状态F.png" style="margin-right: 20px" height="40px" width="40px"  alt="状态"/> 状态仪表</a>
+        </li>
+        <li class="nav-item ">
+            <a class="nav-link cebianlan " href="#" id="bt_jh"><img class=" image-responsive" src="images/任务计划.png" style="margin-right: 20px" height="40px" width="40px"  alt="状态"/>任务计划</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link cebianlan" href="#" id="bt_kb"><img class=" image-responsive" src="images/看板.png"  style="margin-right: 20px"height="40px" width="40px"  alt="状态"/>看&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;板</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link cebianlan" href="#"><img class=" image-responsive" src="images/项目.png" style="margin-right: 20px" height="40px" width="40px"  alt="状态"/>项&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;目</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link cebianlan" href="#"><img class=" image-responsive pull-left"  style="margin-right: 20px" src="images/报表日志.png"  height="40px" width="40px"  alt="状态"/>报表日志</a>
+        </li>
+        <li class="nav-item  " >
+
+            <a class="nav-link cebianlan" href="#" id="bt_set"><img class=" image-responsive" style="margin-right: 20px"  src="images/设置.png"  height="40px" width="40px"  alt="状态"/>设&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;置</a>
+        </li>
+    </ul>
+
+
+
+
+
+</div>
+
+<div>
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link " href="#" id="ygszbt">员工账号设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" id="bmszbt">部门设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" id="jsszbt">角色权限设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" id="wpflszbt">物品分类设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" id="wpszbt">物品设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" id="dwszbt">单位设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" id="qxszbt">权限设置</a>
+        </li>
+
+            <div class="col-md-12 column hied" id="titile_success">
+                <div class="alert alert-success alert-dismissable fade show" id="success">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>成功!</strong> 指定操作成功提示信息。
+                </div>
+            </div>
+
+
+            <div class="col-md-12 column hied" id="titile_error">
+                <div class="alert alert-danger alert-dismissable fade show" id="error">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>错误!</strong> 失败的操作。
+                </div>
+            </div>
+
+    </ul>
+</div>
+<div id="ygsz">
+
+    <div >
+        <div class="btn-group">
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-link btn-default  dropdown-toggle" data-toggle="dropdown">
+                    全部部门
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#">Tablet</a>
+                    <a class="dropdown-item" href="#">Smartphone</a>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-info btn-default" id="newygbt" style="float:right" >新增员工账号</button>
+    </div>
+    <div class="row ">
+    <table class="table table-hover">
+        <thead style="">
+        <tr>
+            <th>用户名</th>
+            <th>昵称</th>
+            <th>部门</th>
+            <th>手机</th>
+            <th>邮箱</th>
+            <th></th>
+        </tr>
+        </thead>
+    </table>
+    </div>
+    <div class="row " style="height:720px;" >
+        <div class="col-md-12 column" style="overflow-y: auto;height: 100%;">
+            <table class="table table-hover">
+
+                <tbody id="yginfo">
+
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+
+</div>
+
+
+<div id="bmsz">
+    <button type="button" class="btn btn-info btn-default" style="float:right" id="new_dept" data-toggle="modal" data-target="#newdept">新增部门</button>
+
+    <!-- 新增部门模态框 -->
+    <div class="modal fade" id="newdept">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- 模态框头部 -->
+                <div class="modal-header">
+                    <h4 class="modal-title">新增部门</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- 模态框主体 -->
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="deptname">部门名称:</label>
+                        <input type="text" class="form-control" id="deptname">
+                    </div>
+                    <p>下属部门选择</p>
+                    <div class="form-check" id="xsbm">
+
+
+
+                    </div>
+
+
+
+                </div>
+
+                <!-- 模态框底部 -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="newdept_tj">提交</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row ">
+        <div class="col-md-12 column"  >
+            <table class="table table-hover" >
+                <thead>
+                <tr>
+                    <th>部门名称</th>
+                    <th></th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+
+
+
+
+    <div class="row "  style="height:720px;">
+        <div class="col-md-12 column" style="overflow-y: auto;height: 100%;">
+        <table class="table table-hover" >
+
+            <tbody id="dept_table">
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!--角色设置-->
+<div id="jssz">
+    <div class="row">
+    <button type="button" class="btn btn-info btn-default" style="float:right" id="new_js_btn">新增角色</button>
+
+    </div>
+    <div class="row">
+        <table class="table table-hover">
+            <thead style="">
+            <tr>
+                <th>角色名称</th>
+                <th></th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="row " style="height:720px;" >
+        <div class="col-md-12 column" style="overflow-y: auto;height: 100%;">
+            <table class="table table-hover">
+
+                <tbody id="js_tb">
+
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+
+</div>
+
+<!--物品分类设置-->
+<div id="wpflsz">
+    <button type="button" class="btn btn-info btn-default" data-toggle="modal" data-target="#newmatlstr" style="float:right">新增物品分类</button>
+    <div class="row">
+     <div id="browser" class="filetree treeview-famfamfam">
+    </div>
+    </div>
+
+</div>
+
+<!--物品设置-->
+<div id="wpsz">
+    <div class="row">
+    <button type="button" class="btn btn-info btn-default" style="float:right" id="new_wp_btn">新增物品</button>
+    </div>
+    <div class="row">
+        <table class="table table-hover">
+            <thead style="">
+            <tr>
+                <th>主图</th>
+                <th>物品编码</th>
+                <th>物品名称</th>
+                <th>物品分类</th>
+                <th>物品样式</th>
+                <th>物品品牌</th>
+                <th>区别参数一</th>
+                <th>区别参数二</th>
+                <th>单位</th>
+                <th><th>
+            </tr>
+            </thead>
+            <tbody id="wp_tb">
+
+            </tbody>
+        </table>
+    </div>
+
+
+
+
+</div>
+
+<!--单位设置-->
+<div id="dwsz">
+    <button type="button" class="btn btn-info btn-default" style="float:right" data-toggle="modal" data-target="#newdw">新增单位</button>
+
+        <!--新建单位模态窗-->
+        <div class="modal fade" id="newdw">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+
+                    <!-- 模态框头部 -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">新增单位</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="dwname">单位名:</label>
+                            <input type="text" class="form-control" id="dwname">
+                        </div>
+                    </div>
+
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" id="newdw_tj">提交</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    <div class="row ">
+        <div class="col-md-12 column">
+
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>名称</th>
+
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="dw_info">
+
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+    </div>
+
+<!--权限设置-->
+<div id="qxsz">
+    <button type="button" class="btn btn-info btn-default" style="float:right" data-toggle="modal" data-target="#newauthority" >新增权限</button>
+
+
+    <div class="row ">
+        <div class="col-md-12 column">
+
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>名称</th>
+
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="qxlist_info">
+
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+</div>
+
+<!--新增员工-->
+<div class="container" id="newyg">
+    <br>
+        <h2>基本信息</h2>
+        <form id="ygform">
+            <div class="form-group">
+                <label for="user_name">用户名:</label>
+                <input type="text" class="form-control col-md-5" id="user_name" name="user_name" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="user_password">密码:</label>
+                <input type="password" class="form-control col-md-5" id="user_password" name="user_password" placeholder="Enter password">
+            </div>
+            <div class="form-group">
+                <label for="nickname">昵称:</label>
+                <input type="text" class="form-control col-md-5" id="nickname" name="nickname" placeholder="Enter nickname">
+            </div>
+            <div class="row clearfix inline">
+                <div class="col-md-6 column ">
+                    <label for="phone">手机:</label>
+                    <input type="text" class="form-control  " id="phone" name="phone"  placeholder="Enter phone">
+                </div>
+                <div class="col-md-6 column">
+                    <label for="email">邮箱:</label>
+                    <input type="email" class="form-control  " id="email" name="email" placeholder="Enter email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="sel1">部门	:</label>
+                <select class="form-control col-md-5" id="sel1">
+                </select>
+
+            </div>
+
+            <!--部门-->
+            <div class="form-group hied">
+                <label for="image_file">部门选择</label>
+                <input type="password" class="form-control " id="bmhied" name="dept_id" >
+            </div>
+
+            <div class="form-group hied">
+                <label for="image_file">头像选择</label>
+                <input type="password" class="form-control " id="image_file" name="image_file" placeholder="Enter password" value="/images/touxiang/pic.png">
+            </div>
+
+            <div class="form-group ">
+                <a href="#xztx" data-toggle="modal" data-target="#xztx" id="pic_choose" >头像选择</a>
+            <img class="img-circle image-responsive" src="/images/touxiang/pic.png" style=" border-radius:50%;"  height="40" width="40"  alt="头像" id="pic_choose_v"/>
+            </div>
+            <button type="button" class="btn btn-primary" id="newyg_tj">保存</button>
+        </form>
+    </div>
+
+<!--编辑员工-->
+<div class="container" id="edyg">
+    <br>
+    <h2>基本信息</h2>
+    <form id="edygform">
+        <div class="form-group hied">
+            <label for="ed_logintl_id">序列id:</label>
+            <input type="text" class="form-control col-md-5" id="ed_logintl_id" name="logintl_id" >
+        </div>
+        <div class="form-group hied">
+            <label for="ed_user_name">用户名:</label>
+            <input type="text" class="form-control col-md-5" id="ed_user_name" name="user_name"  >
+        </div>
+        <div class="form-group hied">
+            <label for="ed_user_name_view">用户名:</label>
+            <input type="text" class="form-control col-md-5" id="ed_user_name_view"   disabled >
+        </div>
+
+        <div class="form-group">
+            <label for="ed_user_password">密码:</label>
+            <input type="password" class="form-control col-md-5" id="ed_user_password" name="user_password" placeholder="Enter password">
+        </div>
+        <div class="form-group">
+            <label for="ed_nickname">昵称:</label>
+            <input type="text" class="form-control col-md-5" id="ed_nickname" name="nickname" placeholder="Enter nickname">
+        </div>
+        <div class="row clearfix inline">
+            <div class="col-md-6 column ">
+                <label for="ed_phone">手机:</label>
+                <input type="text" class="form-control  " id="ed_phone" name="phone"  placeholder="Enter phone">
+            </div>
+            <div class="col-md-6 column">
+                <label for="ed_email">邮箱:</label>
+                <input type="email" class="form-control  " id="ed_email" name="email" placeholder="Enter email">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="sel1">部门	:</label>
+            <select class="form-control col-md-5 " id="ed_sel1">
+            </select>
+
+        </div>
+
+        <!--部门-->
+        <div class="form-group hied">
+            <label for="ed_image_file">部门选择</label>
+            <input type="password" class="form-control " id="ed_bmhied" name="dept_id" >
+        </div>
+
+        <div class="form-group hied">
+            <label for="ed_image_file">头像选择</label>
+            <input type="password" class="form-control " id="ed_image_file" name="image_file" placeholder="Enter password" value="/images/touxiang/pic.png">
+        </div>
+
+        <div class="form-group ">
+            <a href="#xztx" data-toggle="modal" data-target="#xztx" id="ed_pic_choose" >头像选择</a>
+            <img class="img-circle image-responsive" src="/images/touxiang/pic.png" style=" border-radius:50%;"  height="40" width="40"  alt="头像" id="ed_pic_choose_v"/>
+        </div>
+        <button type="button" class="btn btn-warning" id="edyg_del">删除</button>
+        <button type="button" class="btn btn-primary" id="edyg_tj">保存</button>
+    </form>
+</div>
+
+
+<!--新增角色-->
+<div class="container" id="newjspage">
+    <br>
+    <h2>基本信息</h2>
+    <form id="newjsform">
+        <div class="form-group">
+            <label for="new_ch_authorityname">角色名称:</label>
+            <input type="text" class="form-control" id="new_ch_authorityname">
+        </div>
+        <div class="row" style="height:530px;" >
+
+
+
+            <div class="col-md-12 column" style="overflow-y: auto;height: 100%;" >
+                <div class="form-check form-check-inline" id="auchecklist">
+
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+
+        <button type="button" class="btn btn-primary" id="newjs_tj">保存</button>
+    </form>
+</div>
+
+
+<!--编辑角色-->
+<div class="container" id="edjspage">
+    <br>
+    <h2>基本信息</h2>
+    <form id="edjsform">
+        <div class="form-group">
+            <label for="ed_ch_id">角色id:</label>
+            <input type="text" class="form-control" name="ch_id" id="ed_ch_id">
+        </div>
+        <div class="form-group">
+            <label for="ed_ch_authorityname">角色名称:</label>
+            <input type="text" class="form-control" id="ed_ch_authorityname">
+        </div>
+        <div class="row" style="height:530px;" >
+
+
+
+            <div class="col-md-12 column" style="overflow-y: auto;height: 100%;" >
+                <div class="form-check form-check-inline" id="ed_auchecklist">
+
+                </div>
+            </div>
+        </div>
+
+
+        <button type="button" class="btn btn-warning" id="edjs_del">删除</button>
+        <button type="button" class="btn btn-primary" id="edjs_tj">保存</button>
+    </form>
+</div>
+
+
+<!--新建物品-->
+<div class="container" id="new_wupin_page">
+    <br>
+    <h3>物品信息</h3>
+    <form id="wpjsform">
+        <div class="form-group">
+            <label for="new_matl_id">物品编码:</label>
+            <input type="text" class="form-control" name="matl_id" id="new_matl_id">
+        </div>
+        <div class="form-group">
+            <label for="new_matl_name">物品名称:</label>
+            <input type="text" class="form-control" name="matl_name" id="new_matl_name">
+        </div>
+        <div class="form-group hied">
+            <label for="new_matl_parent">物品目录:</label>
+            <input type="text" class="form-control" name="matl_parent" id="new_matl_parent">
+        </div>
+        <div class="form-group">
+            <div class="form-group">
+                <label for="new_wpmu">物品目录:</label>
+                <select class="form-control" id="new_wpmu">
+
+                </select>
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <label for="new_model">物品模型:</label>
+            <input type="text" class="form-control" name="model" id="new_model">
+        </div>
+        <div class="form-group">
+            <label for="new_brand">物品品牌:</label>
+            <input type="text" class="form-control" name="brand" id="new_brand">
+        </div>
+        <div class="form-group">
+            <label for="new_difference1">区别参数1:</label>
+            <input type="text" class="form-control" name="difference1" id="new_difference1">
+        </div>
+        <div class="form-group">
+        <label for="new_difference2">区别参数2:</label>
+        <input type="text" class="form-control" name="difference2" id="new_difference2">
+    </div>
+        <div class="form-group hied">
+            <label for="new_min_danwei">最小单位:</label>
+            <input type="text" class="form-control" name="min_danwei" id="new_min_danwei">
+        </div>
+        <div class="form-inline">
+
+                <label for="ch_dw1" class="dalabel">最小单位:</label>
+                <select class="form-control danwei " id="ch_dw1">
+
+                </select>
+            <label for="ch_dw2"  class="dalabel">额外单位1:</label>
+            <select class="form-control danwei" id="ch_dw2">
+
+            </select>
+            <label for="ch_dw3"  class="dalabel">额外单位2:</label>
+            <select class="form-control danwei" id="ch_dw3">
+
+            </select>
+
+        </div>
+
+        <div class="form-group hied">
+            <label for="new_danwei1">额外单位1:</label>
+            <input type="text" class="form-control" name="danwei1" id="new_danwei1">
+        </div>
+
+
+        <div class="form-group hied">
+            <label for="new_danwei2">额外单位2:</label>
+            <input type="text" class="form-control" name="danwei2" id="new_danwei2">
+        </div>
+
+
+        <div class="form-inline">
+            <label  class="dalabel" for="new_relat_danwei1">额外单位1=最小单位	&times;:</label>
+            <input type="text"style="width: 60px;margin-left: 5px" class="form-control" name="relat_danwei1" id="new_relat_danwei1">
+            <label  class="dalabel" for="new_relat_danwei2">额外单位2=最小单位	&times;:</label>
+            <input type="text" style="width: 60px;margin-left: 5px" class="form-control" name="relat_danwei2" id="new_relat_danwei2">
+            <label  class="dalabel" for="new_relat_danwei12">额外单位2=额外单位	&times;:</label>
+            <input type="text" style="width: 60px;margin-left: 5px" class="form-control" name="relat_danwei12" id="new_relat_danwei12">
+        </div>
+
+        <button type="button" class="btn btn-primary" id="new_wp_tj">保存</button>
+    </form>
+</div>
+
+<!--编辑物品-->
+<div class="container" id="ed_wupin_page">
+    <br>
+    <h3>物品信息</h3>
+    <h4 id="edwpid"></h4>
+    <form id="edwpform">
+        <div class="form-group hied">
+            <label for="ed_matl_id">物品编码:</label>
+            <input type="text" class="form-control" name="matl_id" id="ed_matl_id">
+        </div>
+        <div class="form-group">
+            <label for="ed_matl_name">物品名称:</label>
+            <input type="text" class="form-control" name="matl_name" id="ed_matl_name">
+        </div>
+        <div class="form-group hied">
+            <label for="ed_matl_parent">物品目录:</label>
+            <input type="text" class="form-control" name="matl_parent" id="ed_matl_parent">
+        </div>
+        <div class="form-group">
+            <div class="form-group">
+                <label for="new_wpmu">物品目录:</label>
+                <select class="form-control" id="ed_wpmu">
+
+                </select>
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <label for="ed_model">物品模型:</label>
+            <input type="text" class="form-control" name="model" id="ed_model">
+        </div>
+        <div class="form-group">
+            <label for="ed_brand">物品品牌:</label>
+            <input type="text" class="form-control" name="brand" id="ed_brand">
+        </div>
+        <div class="form-group">
+            <label for="ed_difference1">区别参数1:</label>
+            <input type="text" class="form-control" name="difference1" id="ed_difference1">
+        </div>
+        <div class="form-group">
+            <label for="ed_difference2">区别参数2:</label>
+            <input type="text" class="form-control" name="difference2" id="ed_difference2">
+        </div>
+        <div class="form-group hied">
+            <label for="ed_min_danwei">最小单位:</label>
+            <input type="text" class="form-control" name="min_danwei" id="ed_min_danwei">
+        </div>
+        <div class="form-inline">
+
+            <label for="ed_ch_dw1" class="dalabel">最小单位:</label>
+            <select class="form-control danwei " id="ed_ch_dw1">
+
+            </select>
+            <label for="ed_ch_dw2"  class="dalabel">额外单位1:</label>
+            <select class="form-control danwei" id="ed_ch_dw2">
+
+            </select>
+            <label for="ed_ch_dw3"  class="dalabel">额外单位2:</label>
+            <select class="form-control danwei" id="ed_ch_dw3">
+
+            </select>
+
+        </div>
+
+        <div class="form-group hied">
+            <label for="ed_danwei1">额外单位1:</label>
+            <input type="text" class="form-control" name="danwei1" id="ed_danwei1">
+        </div>
+
+
+        <div class="form-group hied">
+            <label for="ed_danwei2">额外单位2:</label>
+            <input type="text" class="form-control" name="danwei2" id="ed_danwei2">
+        </div>
+
+
+        <div class="form-inline">
+            <label  class="dalabel" for="ed_relat_danwei1">额外单位1=最小单位	&times;:</label>
+            <input type="text"style="width: 60px;margin-left: 5px" class="form-control" name="relat_danwei1" id="ed_relat_danwei1">
+            <label  class="dalabel" for="ed_relat_danwei2">额外单位2=最小单位	&times;:</label>
+            <input type="text" style="width: 60px;margin-left: 5px" class="form-control" name="relat_danwei2" id="ed_relat_danwei2">
+            <label  class="dalabel" for="ed_relat_danwei12">额外单位2=额外单位	&times;:</label>
+            <input type="text" style="width: 60px;margin-left: 5px" class="form-control" name="relat_danwei12" id="ed_relat_danwei12">
+        </div>
+
+        <button type="button" class="btn btn-primary" id="ed_wp_tj">保存</button>
+        <button type="button" class="btn btn-primary" id="del_wp_tj">删除</button>
+    </form>
+</div>
+
+
+<!--头像选择模态框-->
+<div class="modal fade" id="xztx">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+
+            <div class="modal-header">
+                <h4 class="modal-title">选择头像</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body" id="allpic">
+                <div class="col-md-12 column">
+                    <div class="row clearfix">
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/pic.png" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/timg.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a1.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 column">
+                    <div class="row clearfix">
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a5.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a8.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a7.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 column">
+                    <div class="row clearfix">
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a2.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a3.jpeg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a4.jpeg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 column">
+                    <div class="row clearfix">
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive touxiang" src="/images/touxiang/a6.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+                        <div class="col-md-4 column">
+                            <img class="img-circle image-responsive  touxiang" src="/images/touxiang/a9.jpg" style=" border-radius:50%;"  height="80" width="80"  alt="头像" />
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="shoutdowntx">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--新增物品目录-->
+<div class="modal fade" id="newmatlstr">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+
+            <div class="modal-header">
+                <h4 class="modal-title">新增物品目录</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body" id="c">
+                <div class="container">
+                    <form id="new_matlstr_form">
+                        <div class="form-group">
+                            <label for="email">物品分类id</label>
+                            <input type="text" class="form-control" id="matl_structid" name="matl_structid" placeholder="Enter id">
+                        </div>
+                        <div class="form-group hied">
+                            <label for="matl_structparent">物品分类父目录</label>
+                            <input type="text" class="form-control" id="matl_structparent"  name="matl_structparent">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ch_ids">物品分类目录</label>
+                            <select class="form-control" id="matl_structparent_view">
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="matl_structname">物品分类名称</label>
+                            <input type="text" class="form-control" id="matl_structname" name="matl_structname">
+                        </div>
+
+                        <div class="form-group hied">
+                            <input type="text" class="form-control" name="is_mulu" value=true id="is_mulu" >是否为目录
+                        </div>
+
+
+                        <div class="form-group">
+                            <label for="ch_ids">角色权限:</label>
+                            <select class="form-control" id="ch_ids">
+
+                            </select>
+                        </div>
+
+                    </form>
+                </div>
+
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="new_matlstr">Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" >关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- 新增权限 -->
+<div class="modal fade" id="newauthority">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">新增权限</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new_authority_name">权限名称</label>
+                    <input type="text" class="form-control" id="new_authority_name">
+                </div>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="new_authority_tj">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#bmsz').hide();
+    $('#jssz').hide();
+    $('#wpflsz').hide();
+    $('#wpsz').hide();
+    $('#dwsz').hide();
+    $('#newyg').hide();
+    $('#edyg').hide();
+    $('#edjspage').hide();
+    $('#qxsz').hide();
+    $('#newjspage').hide();
+    $('#new_wupin_page').hide();
+    $('#ed_wupin_page').hide();
+
+</script>
+
+<!--编辑部门-->
+<div class="modal fade" id="eddept">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">编辑部门</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+
+
+                <div class="form-group">
+                    <label for="deptname">部门名称:</label>
+                    <input type="text" class="form-control"  id="edbm_name">
+                </div>
+
+                <div class="form-check" id="edbm">
+
+
+
+                </div>
+
+
+
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="eddept_tj">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<footer class="text-center" style="clear: both">
+    <div class="container">
+
+        <div >
+            <p>Copyright © Ramo. All rights reserved.</p>
+        </div>
+
+    </div>
+</footer>
+
+</body>
+</html>

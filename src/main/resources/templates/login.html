@@ -1,0 +1,95 @@
+<!doctype html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+  <script src="/js/jquery-3.3.1.min.js"></script>
+  <title>WMS登录</title>
+  <link rel="stylesheet" type="text/css" href="/css/style.css" />
+  <link rel="stylesheet" type="text/css" href="/css/body.css"/>
+</head>
+
+<script>
+    $(document).ready(function(){
+        $.fn.serializeObject = function()
+        {
+            var o = {};
+            var a = this.serializeArray();
+            $.each(a, function() {
+                if (o[this.name]) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]];
+                    }
+                    o[this.name].push(this.value || '');
+                } else {
+                    o[this.name] = this.value || '';
+                }
+            });
+            return o;
+        };
+
+        $("#js-btn-login").click(function () {
+            var jsonuserinfo = $("#form_login").serializeObject();
+            var formjson=JSON.stringify(jsonuserinfo);
+            $.ajax({
+                type:"POST",
+                dataType: "JSON",
+                url:"http://http://114.115.172.113/logincheck",
+                data:formjson,
+                contentType:"application/json",
+                success:function(result,status){
+                    if (result.status==0)
+                        alert(result.message);
+                    else{
+                        var url=result.url;
+                        var logintl_id=result.logintl_id;
+                        var nickname=result.nickname;
+                        var image_file=result.image_file;
+                        var user_name=result.user_name;
+                        window.location.href=url+"?user_name="+user_name+"&logintl_id="+logintl_id+"&nickname="+nickname+"&image_file="+image_file;
+                    }
+                },
+                error:function () {
+                }
+            });
+        });
+    });
+
+
+
+</script>
+<body>
+<div class="container">
+  <section id="content">
+    <form  id="form_login">
+      <h1>登录</h1>
+      <div>
+        <input type="text" placeholder="用户名" required="" name="user_name" id="username" />
+      </div>
+      <div>
+        <input type="password" placeholder="密码" required="" name ="user_password" id="password" />
+      </div>
+      <div class="">
+        <span class="help-block u-errormessage" id="js-server-helpinfo">&nbsp;</span>			</div>
+      <div>
+        <!-- <input type="submit" value="Log in" /> -->
+        <input type="button" value="登录" class="btn btn-primary" id="js-btn-login"/>
+        <a href="#">忘记密码?</a>
+        <!-- <a href="#">Register</a> -->
+      </div>
+    </form><!-- form -->
+    <div class="button">
+      <span class="help-block u-errormessage">&nbsp;</span>
+      <a href="#">注册</a>
+    </div> <!-- button -->
+  </section><!-- content -->
+</div>
+<!-- container -->
+
+
+<br><br><br><br>
+<div style="text-align:center;">
+  <p>雷默WMS</p>
+</div>
+</body>
+</html>
